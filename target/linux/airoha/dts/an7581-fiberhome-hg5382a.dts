@@ -76,6 +76,18 @@
 			linux,default-trigger = "pon0-los";
 		};
 	};
+
+	/* The AN7581 USB3 PHY is fed from the always-on 3.3V rail.
+	 * VBUS on HG5382A is board-always-on, so no 5V GPIO regulator is needed.
+	 */
+	reg_3p3v: regulator-3p3v {
+		compatible = "regulator-fixed";
+		regulator-name = "fixed-3.3V";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
 };
 
 &en7581_pinctrl {
@@ -227,3 +239,52 @@
 	airoha,pon-data-path;
 	status = "okay";
 };
+
+/* USB host.
+ * The AN7581 provides two xHCI controllers; USB 2.0 is always available,
+ * USB 3.0 only when the matching Serdes port is wired for USB on the board.
+ * Following the reference Nokia XG-040G-MD layout (same SoC, also with a
+ * 2.5G port): USB0 keeps the full USB2+USB3 phys, USB1 is used in USB2.0-only
+ * mode because its USB3 Serdes lane is shared with PCIe2 and is not routed.
+ */
+&usb0 {
+	status = "okay";
+
+	vusb33-supply = <&reg_3p3v>;
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	usb_port1: port@1 {
+		reg = <1>;
+		#trigger-source-cells = <0>;
+	};
+};
+
+&usb1 {
+	status = "okay";
+
+	mediatek,u3p-dis-msk = <0x1>;
+	phys = <&usb1_phy PHY_TYPE_USB2>;
+	vusb33-supply = <&reg_3p3v>;
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	usb_port2: port@1 {
+		reg = <1>;
+		#trigger-source-cells = <0>;
+	};
+};
+
+/* If the board has a USB activity LED, replace XX with its GPIO and uncomment:
+&leds {
+	led-usb {
+		color = <LED_COLOR_ID_GREEN>;
+		function = LED_FUNCTION_USB;
+		gpios = <&en7581_pinctrl XX GPIO_ACTIVE_LOW>;
+		linux,default-trigger = "usbport";
+		trigger-sources = <&usb_port1>;
+	};
+};
+*/
