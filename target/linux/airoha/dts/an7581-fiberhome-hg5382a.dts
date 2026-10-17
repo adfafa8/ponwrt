@@ -227,3 +227,24 @@
 	airoha,pon-data-path;
 	status = "okay";
 };
+
+&usb_pcs {
+	status = "okay";
+};
+
+&usb0 {
+	status = "okay";
+
+	mediatek,u3p-dis-msk = <0x1>;
+    phys = <&usb0_phy PHY_TYPE_USB2>;
+
+	vusb33-supply = <&reg_3p3v>;
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	usb_port1: port@1 {
+		reg = <1>;
+		#trigger-source-cells = <0>;
+	};
+};
