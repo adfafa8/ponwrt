@@ -3,8 +3,9 @@
 
 /dts-v1/;
 
-#include "ipq6018-512m.dtsi"
+#include "ipq6018.dtsi"
 #include "ipq6018-cp-cpu.dtsi"
+#include "ipq6018-512m.dtsi"
 #include "ipq6018-ess.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
@@ -323,6 +324,8 @@
 	aqr114c: ethernet-phy@8 {
 		reg = <8>;
 		reset-gpios = <&tlmm 77 GPIO_ACTIVE_LOW>;
+		reset-assert-us = <100000>;
+		reset-deassert-us = <250000>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		firmware-name = "marvell/AQR114C.cld";
 		nvmem-cells = <&aqr_fw>;
@@ -543,13 +546,13 @@
 			/* ath11k has no DT compatible for PCI cards */
 			compatible = "pci17cb,1104";
 			reg = <0x00010000 0 0 0 0>;
-			qcom,ath11k-calibration-variant = "Linksys-MR7500";
+			qcom,calibration-variant = "Linksys-MR7500";
 		};
 	};
 };
 
 &wifi {
 	status = "okay";
-	qcom,ath11k-calibration-variant = "Linksys-MR7500";
+	qcom,calibration-variant = "Linksys-MR7500";
 	qcom,ath11k-fw-memory-mode = <1>;
 };

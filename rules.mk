@@ -181,11 +181,22 @@ ifeq ($(or $(CONFIG_EXTERNAL_TOOLCHAIN),$(CONFIG_TARGET_uml)),)
   iremap = -f$(if $(CONFIG_REPRODUCIBLE_DEBUG_INFO),file,macro)-prefix-map=$(1)=$(2)
 endif
 
+# Unlike iremap, always rewrite the paths in the debug information, for output
+# that ships with it, such as the BTF of BPF objects.
+fremap = -ffile-prefix-map=$(1)=$(2)
+
 # A header taken from the staging directory reaches __FILE__ and the debug
 # information with its absolute path, which no other map covers. Keep the
 # staging_dir element, so that the result stays apart from the map of
 # BUILD_DIR, whose last element carries the same name.
-IREMAP_STAGING_DIR = $(call iremap,$(STAGING_DIR),staging_dir/$(notdir $(STAGING_DIR)))
+#
+# @param 1: Name of the map helper, iremap or fremap.
+remap_staging_dir = $(call $(1),$(STAGING_DIR),staging_dir/$(notdir $(STAGING_DIR)))
+IREMAP_STAGING_DIR = $(call remap_staging_dir,iremap)
+
+# The compiler's own headers, e.g. larchintrin.h which the LoongArch kernel
+# includes, come with the absolute path of the toolchain directory.
+IREMAP_TOOLCHAIN_DIR = $(call iremap,$(TOOLCHAIN_DIR),staging_dir/$(notdir $(TOOLCHAIN_DIR)))
 
 PACKAGE_DIR?=$(BIN_DIR)/packages
 PACKAGE_DIR_ALL?=$(TOPDIR)/staging_dir/packages/$(BOARD)
@@ -268,6 +279,7 @@ ifndef DUMP
     -include $(TOOLCHAIN_DIR)/info.mk
     export GCC_HONOUR_COPTS:=0
     TARGET_CROSS:=$(if $(TARGET_CROSS),$(TARGET_CROSS),$(OPTIMIZE_FOR_CPU)-openwrt-linux$(if $(TARGET_SUFFIX),-$(TARGET_SUFFIX))-)
+    GCC_VERSION:=$(if $(filter-out unknown,$(GCC_VERSION)),$(GCC_VERSION),$(GCCV))
     TOOLCHAIN_ROOT_DIR:=$(TOPDIR)/staging_dir/$(TOOLCHAIN_DIR_NAME)
     TOOLCHAIN_BIN_DIRS:=$(TOOLCHAIN_ROOT_DIR)/bin
     TOOLCHAIN_INC_DIRS:=$(TOOLCHAIN_ROOT_DIR)/usr/include $(TOOLCHAIN_ROOT_DIR)/include
